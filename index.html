@@ -83,7 +83,10 @@
     <button class="mode-btn" onclick="setMode('proverb')">🧩 Поговорки</button>
     <button class="mode-btn" onclick="setMode('fav')">⭐ Избранное</button>
   </div>
-
+  <div style="margin-bottom: 15px; display: flex; gap: 8px;">
+    <input type="text" id="searchInput" placeholder="Поиск по словам..." oninput="searchItems()" 
+      style="flex: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: var(--text); padding: 10px 15px; border-radius: 10px; font-size: 0.9rem; outline: none;">
+  </div>
   <div class="type-header" id="typeHeader">
     <span class="type-badge" id="typeBadge">Загрузка...</span>
   </div>
@@ -1432,6 +1435,49 @@ function setMode(mode) {
   document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
   event.target.classList.add('active');
   nextItem();
+}
+function searchItems() {
+  let query = document.getElementById('searchInput').value.toLowerCase().trim();
+  if (!query) {
+    updateFilter();
+    nextItem();
+    return;
+  }
+  
+  let found = DATA.filter(item => 
+    item.text.toLowerCase().includes(query) || 
+    item.meaning.toLowerCase().includes(query)
+  );
+  
+  if (found.length === 0) {
+    document.getElementById('phraseTitle').innerText = 'Ничего не найдено :(';
+    document.getElementById('answerBlock').style.display = 'none';
+    document.getElementById('btnShow').style.display = 'none';
+    document.getElementById('counterTag').innerText = '0 результатов';
+    return;
+  }
+  
+  currentItem = found[Math.floor(Math.random() * found.length)];
+  document.getElementById('phraseTitle').innerText = currentItem.text;
+  document.getElementById('meaningText').innerText = currentItem.meaning;
+  
+  if (currentItem.author) {
+    document.getElementById('authorText').innerText = '— ' + currentItem.author;
+    document.getElementById('authorText').style.display = 'block';
+  } else {
+    document.getElementById('authorText').style.display = 'none';
+  }
+  
+  if (currentItem.example) {
+    document.getElementById('exampleText').innerText = currentItem.example;
+    document.getElementById('exampleBox').style.display = 'block';
+  } else {
+    document.getElementById('exampleBox').style.display = 'none';
+  }
+  
+  document.getElementById('answerBlock').style.display = 'block';
+  document.getElementById('btnShow').style.display = 'none';
+  document.getElementById('counterTag').innerText = 'Найдено: ' + found.length;
 }
 
 window.onload = () => {
