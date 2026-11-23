@@ -111,6 +111,7 @@
   <div style="display:flex; justify-content:center; margin-top:10px;">
     <button class="btn-theme" onclick="changeTheme()">🎨 Сменить фон</button>
   </div>
+      <button class="btn-theme" onclick="exportFavorites()" style="margin-left: 8px;">💾 Экспорт</button>
 
   <div class="counter" id="counterTag"></div>
 </div>
@@ -1478,6 +1479,31 @@ function searchItems() {
   document.getElementById('answerBlock').style.display = 'block';
   document.getElementById('btnShow').style.display = 'none';
   document.getElementById('counterTag').innerText = 'Найдено: ' + found.length;
+}
+  function exportFavorites() {
+  if (favorites.length === 0) {
+    alert('У вас пока нет избранных фразеологизмов!');
+    return;
+  }
+  
+  let text = "МОИ ИЗБРАННЫЕ ФРАЗЕОЛОГИЗМЫ И ЦИТАТЫ:\n\n";
+  favorites.forEach((item, index) => {
+    text += (index + 1) + ". " + item.text + "\n";
+    text += "Значение: " + item.meaning + "\n";
+    if (item.author) text += "Автор: " + item.author + "\n";
+    if (item.example) text += "Пример: " + item.example + "\n";
+    text += "-------------------\n";
+  });
+  
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Мое_избранное_Слово_дня.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 window.onload = () => {
