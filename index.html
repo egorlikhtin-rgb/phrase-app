@@ -1636,14 +1636,120 @@ function endQuiz() {
   
   document.getElementById('quizScore').innerText = resultText;
 }
+  // === МЕНЮ ИГР ===
+function openGamesMenu() {
+  document.getElementById('gamesModal').style.display = 'flex';
+}
+
+function closeGamesMenu() {
+  document.getElementById('gamesModal').style.display = 'none';
+}
+
+// === ИГРА "НАЙДИ ПАРУ" (35 СЕКУНД) ===
+let memoryTimer = null;
+let memoryTimeLeft = 35;
+let memoryScore = 0;
+let memoryCards = [];
+let memorySelected = [];
+
+function startMemoryGame() {
+  closeGamesMenu();
+  document.getElementById('quizModal').style.display = 'flex';
+  document.getElementById('quizTitle').innerText = 'Найди пару: 35 секунд';
+  document.getElementById('quizTimer').innerText = '35';
+  document.getElementById('quizScore').innerText = '0';
+  
+  document.getElementById('quizStartBtn').style.display = 'none';
+  document.getElementById('quizCloseBtn').style.display = 'block';
+  
+  memoryTimeLeft = 35;
+  memoryScore = 0;
+  memorySelected = [];
+  let container = document.getElementById('quizOptions');
+  container.style.gridTemplateColumns = 'repeat(4, 1fr)';
+  
+  let pool = DATA.filter(d => d.type === 'phrase' && d.example).slice(0, 4);
+  memoryCards = [];
+  pool.forEach(p => {
+    memoryCards.push({ id: p.meaning, text: p.text, type: 'text' });
+    memoryCards.push({ id: p.meaning, text: p.meaning, type: 'meaning' });
+  });
+  
+  memoryCards.sort(() => Math.random() - 0.5);
+  
+  container.innerHTML = '';
+  memoryCards.forEach((card, index) => {
+    let btn = document.createElement('button');
+    btn.innerText = '?';
+    btn.dataset.index = index;
+    btn.style.cssText = 'padding: 15px; background: #3498db; color: white; border: none; border-radius: 8px; font-size: 0.8rem; cursor: pointer; min-height: 80px; display: flex; align-items: center; justify-content: center; text-align: center;';
+    btn.onclick = () => flipMemoryCard(index, btn);
+    container.appendChild(btn);
+  });
+  
+  memoryTimer = setInterval(() => {
+    memoryTimeLeft--;
+    document.getElementById('quizTimer').innerText = memoryTimeLeft;
+    if (memoryTimeLeft <= 0) { clearInterval(memoryTimer); endMemoryGame(); }
+  }, 1000);
+  
+  document.getElementById('quizQuestion').innerText = 'Найдите пару: фразеологизм и его значение';
+}
+
+function flipMemoryCard(index, btn) {
+  let card = memoryCards[index];
+  if (memorySelected.length >= 2 || btn.disabled || btn.innerText !== '?') return;
+  
+  btn.innerText = card.text;
+  btn.style.background = '#e67e22';
+  memorySelected.push({ index, btn, card });
+  
+  if (memorySelected.length === 2) {
+    let [first, second] = memorySelected;
+    if (first.card.id === second.card.id && first.index !== second.index) {
+      memoryScore++;
+      document.getElementById('quizScore').innerText = memoryScore;
+      first.btn.disabled = true;
+      second.btn.disabled = true;
+      first.btn.style.background = '#2ecc71';
+      second.btn.style.background = '#2ecc71';
+      memorySelected = [];
+      
+      if (memoryScore === 4) {
+        clearInterval(memoryTimer);
+        endMemoryGame();
+      }
+    } else {
+      setTimeout(() => {
+        first.btn.innerText = '?';
+        second.btn.innerText = '?';
+        first.btn.style.background = '#3498db';
+        second.btn.style.background = '#3498db';
+        memorySelected = [];
+      }, 1000);
+    }
+  }
+}
+
+function endMemoryGame() {
+  document.getElementById('quizQuestion').innerText = 'Игра окончена!';
+  document.getElementById('quizOptions').innerHTML = '';
+  document.getElementById('quizOptions').style.gridTemplateColumns = '1fr 1fr';
+  document.getElementById('quizTimer').innerText = '0';
+  document.getElementById('quizCloseBtn').style.display = 'block';
+  document.getElementById('quizStartBtn').style.display = 'none';
+  document.getElementById('quizScore').innerText = 'Найдено пар: ' + memoryScore + ' из 4';
+}
 
 window.onload = () => {
   applyTheme();
   nextItem();
 };
+  
 </script>
 </body>
 </html>
+
 
 
 
