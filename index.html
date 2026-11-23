@@ -1523,6 +1523,97 @@ function searchItems() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+  // === ВИКТОРИНА ===
+let quizTimer = null;
+let quizTimeLeft = 25; // 25 СЕКУНД
+let quizCurrentScore = 0;
+let quizCurrentItem = null;
+let quizPool = [];
+
+function startQuiz() {
+  document.getElementById('quizModal').style.display = 'flex';
+  document.getElementById('quizTitle').innerText = '⏱️ Викторина: 25 секунд';
+  document.getElementById('quizTimer').innerText = '25';
+  document.getElementById('quizScore').innerText = '0';
+  document.getElementById('quizQuestion').innerText = 'Нажмите «Начать игру»';
+  document.getElementById('quizOptions').innerHTML = '';
+  document.getElementById('quizStartBtn').style.display = 'block';
+  document.getElementById('quizCloseBtn').style.display = 'none';
+}
+
+function closeQuiz() {
+  document.getElementById('quizModal').style.display = 'none';
+  if (quizTimer) clearInterval(quizTimer);
+}
+
+function startQuizGame() {
+  quizTimeLeft = 25;
+  quizCurrentScore = 0;
+  quizPool = DATA.filter(d => d.type === 'phrase' && d.example);
+  document.getElementById('quizStartBtn').style.display = 'none';
+  document.getElementById('quizCloseBtn').style.display = 'block';
+  document.getElementById('quizScore').innerText = '0';
+  
+  quizTimer = setInterval(() => {
+    quizTimeLeft--;
+    document.getElementById('quizTimer').innerText = quizTimeLeft;
+    if (quizTimeLeft <= 0) { clearInterval(quizTimer); endQuiz(); }
+  }, 1000);
+  
+  nextQuizQuestion();
+}
+
+function nextQuizQuestion() {
+  if (quizTimeLeft <= 0) return;
+  quizCurrentItem = quizPool[Math.floor(Math.random() * quizPool.length)];
+  document.getElementById('quizQuestion').innerText = quizCurrentItem.text;
+  
+  let wrongOptions = [];
+  while (wrongOptions.length < 3) {
+    let rand = quizPool[Math.floor(Math.random() * quizPool.length)];
+    if (rand.meaning !== quizCurrentItem.meaning && !wrongOptions.includes(rand.meaning)) {
+      wrongOptions.push(rand.meaning);
+    }
+  }
+  
+  let allOptions = [quizCurrentItem.meaning, ...wrongOptions].sort(() => Math.random() - 0.5);
+  let optionsContainer = document.getElementById('quizOptions');
+  optionsContainer.innerHTML = '';
+  
+  allOptions.forEach(option => {
+    let btn = document.createElement('button');
+    btn.innerText = option;
+    btn.style.cssText = 'padding: 12px; background: #3498db; color: white; border: none; border-radius: 8px; font-size: 0.9rem; cursor: pointer; transition: 0.2s; text-align: center;';
+    btn.onclick = () => checkAnswer(option);
+    optionsContainer.appendChild(btn);
+  });
+}
+
+function checkAnswer(selected) {
+  if (selected === quizCurrentItem.meaning) {
+    quizCurrentScore++;
+  } else {
+    quizCurrentScore = Math.max(0, quizCurrentScore - 1);
+  }
+  document.getElementById('quizScore').innerText = quizCurrentScore;
+  nextQuizQuestion();
+}
+
+function endQuiz() {
+  document.getElementById('quizQuestion').innerText = 'Игра окончена!';
+  document.getElementById('quizOptions').innerHTML = '';
+  document.getElementById('quizTimer').innerText = '0';
+  document.getElementById('quizCloseBtn').style.display = 'block';
+  document.getElementById('quizStartBtn').style.display = 'block';
+  document.getElementById('quizStartBtn').innerText = 'Играть снова';
+  
+  let resultText = 'Ваш результат: ' + quizCurrentScore + ' очков!';
+  if (quizCurrentScore > 10) resultText = '🏆 Гений фразеологизмов! ' + resultText;
+  else if (quizCurrentScore > 5) resultText = '👍 Отличный результат! ' + resultText;
+  else resultText = '😊 Хорошая попытка! ' + resultText;
+  
+  document.getElementById('quizScore').innerText = resultText;
+}
 
 window.onload = () => {
   applyTheme();
