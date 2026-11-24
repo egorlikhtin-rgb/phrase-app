@@ -115,45 +115,37 @@
      <button class="btn-theme" onclick="openGamesMenu()" style="margin-left: 8px; background: #e67e22; color: white;">🎮 Игры</button>
 
   <div class="counter" id="counterTag"></div>
- <!-- МОДАЛЬНОЕ ОКНО ВИКТОРИНЫ -->
-<div id="quizModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center;">
-  <div class="modal-content" style="text-align: center; max-width: 500px; background: #1e293b; padding: 25px; border-radius: 15px; border: 1px solid #3b82f6; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
-    <h3 id="quizTitle" style="color: #f39c12;">⏱️ Викторина: 25 секунд</h3>
-    <div style="display: flex; justify-content: space-between; margin: 15px 0; font-size: 1.2rem; color: white;">
-      <span>⏱️ <b id="quizTimer">25</b></span>
-      <span>⭐ Очки: <b id="quizScore">0</b></span>
+<!-- МОДАЛЬНОЕ ОКНО ВИКТОРИНЫ -->
+<div id="quizModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 1000; align-items: center; justify-content: center; flex-direction: column; color: #fff; padding: 20px; box-sizing: border-box;">
+  <div style="max-width: 600px; width: 100%; text-align: center;">
+    <h3 id="quizTitle" style="color: #f39c12; margin-bottom: 20px; font-size: 1.5rem;">Викторина</h3>
+    
+    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 1.2rem; background: #1e293b; padding: 15px; border-radius: 10px;">
+      <span>Время: <b id="quizTimer">25</b></span>
+      <span>Очки: <b id="quizScore">0</b></span>
     </div>
     
-    <div id="quizQuestion" style="font-size: 1.3rem; font-weight: bold; margin: 20px 0; min-height: 60px; color: #fff;"></div>
+    <div id="quizQuestion" style="font-size: 1.3rem; font-weight: bold; margin-bottom: 20px; min-height: 60px;"></div>
     
-    <div id="quizOptions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;"></div>
+    <!-- Контейнер для кнопок (викторина) -->
+    <div id="quizOptions" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;"></div>
     
-    <button id="quizStartBtn" onclick="startQuizGame()" style="background: #2ecc71; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%;">Начать игру</button>
-    <button id="quizCloseBtn" onclick="closeQuiz()" style="display: none; background: #e74c3c; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%; margin-top: 10px;">Закрыть</button>
+    <button id="quizStartBtn" onclick="startQuizGame()" style="background: #2ecc71; color: white; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%;">Начать игру</button>
+    <button id="quizCloseBtn" onclick="closeQuiz()" style="display: none; background: #e74c3c; color: white; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%;">Закрыть</button>
   </div>
 </div>
-  <!-- МЕНЮ ВЫБОРА ИГР -->
-<div id="gamesModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 900; align-items: center; justify-content: center;">
-  <div class="modal-content" style="text-align: center; max-width: 600px; background: #1e293b; padding: 25px; border-radius: 15px; border: 1px solid #3b82f6; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
-    <h3 style="color: #f39c12; margin-bottom: 20px;">Выберите игру</h3>
+
+<!-- МЕНЮ ВЫБОРА ИГР -->
+<div id="gamesModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 900; align-items: center; justify-content: center; flex-direction: column; color: #fff; padding: 20px; box-sizing: border-box;">
+  <div style="max-width: 600px; width: 100%; text-align: center;">
+    <h3 style="color: #f39c12; margin-bottom: 20px; font-size: 1.5rem;">Выберите игру</h3>
     
-    <div id="gamesGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
-      <!-- Карточка 1: Викторина -->
-      <div class="game-card" onclick="startQuiz()" style="background: #2c3e50; padding: 15px; border-radius: 10px; cursor: pointer; border: 1px solid #34495e; transition: 0.2s; height: 100px; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-        Викторина
-      </div>
-      <!-- Карточка 2: Найди пару -->
-      <div class="game-card" onclick="startMemoryGame()" style="background: #2c3e50; padding: 15px; border-radius: 10px; cursor: pointer; border: 1px solid #34495e; transition: 0.2s; height: 100px; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-        Найди пару (35 сек)
-      </div>
-      <!-- Остальные пустые ячейки для будущих игр (до 20 штук) -->
-      <div class="game-card empty" style="background: #1a252f; padding: 15px; border-radius: 10px; border: 1px dashed #34495e; height: 100px; display: flex; align-items: center; justify-content: center; color: #7f8c8d; font-size: 0.8rem;">Скоро...</div>
-      <div class="game-card empty" style="background: #1a252f; padding: 15px; border-radius: 10px; border: 1px dashed #34495e; height: 100px; display: flex; align-items: center; justify-content: center; color: #7f8c8d; font-size: 0.8rem;">Скоро...</div>
-      <div class="game-card empty" style="background: #1a252f; padding: 15px; border-radius: 10px; border: 1px dashed #34495e; height: 100px; display: flex; align-items: center; justify-content: center; color: #7f8c8d; font-size: 0.8rem;">Скоро...</div>
-      <div class="game-card empty" style="background: #1a252f; padding: 15px; border-radius: 10px; border: 1px dashed #34495e; height: 100px; display: flex; align-items: center; justify-content: center; color: #7f8c8d; font-size: 0.8rem;">Скоро...</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+      <div onclick="startQuiz()" style="background: #1e293b; padding: 30px 15px; border-radius: 10px; cursor: pointer; border: 1px solid #34495e; font-weight: bold; font-size: 1.1rem;">Викторина</div>
+      <div onclick="startMemoryGame()" style="background: #1e293b; padding: 30px 15px; border-radius: 10px; cursor: pointer; border: 1px solid #34495e; font-weight: bold; font-size: 1.1rem;">Найди пару</div>
     </div>
     
-    <button onclick="closeGamesMenu()" style="background: #e74c3c; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%;">Закрыть</button>
+    <button onclick="closeGamesMenu()" style="background: #e74c3c; color: white; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%;">Закрыть</button>
   </div>
 </div>
 <script>
