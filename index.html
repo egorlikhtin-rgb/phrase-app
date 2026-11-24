@@ -1591,8 +1591,8 @@ function nextQuizQuestion() {
   }
   
   let allOptions = [quizCurrentItem.meaning, ...wrongOptions].sort(() => Math.random() - 0.5);
-  let optionsContainer = document.getElementById('quizOptions');
-  optionsContainer.innerHTML = '';
+optionsContainer.style.display = 'flex';
+optionsContainer.style.flexDirection = 'column';
   
   allOptions.forEach(option => {
     let btn = document.createElement('button');
