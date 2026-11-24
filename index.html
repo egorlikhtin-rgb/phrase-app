@@ -1658,7 +1658,15 @@ function startMemoryGame() {
   memoryScore = 0;
   memorySelected = [];
   let container = document.getElementById('quizOptions');
-  container.style.gridTemplateColumns = 'repeat(4, 1fr)';
+  
+  // Сетка: 2 колонки на телефоне, 3 на ПК
+  if (window.innerWidth < 500) {
+    container.style.gridTemplateColumns = 'repeat(2, 1fr)';
+  } else {
+    container.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  }
+  container.style.display = 'grid';
+  container.style.gap = '10px';
   
   let pool = DATA.filter(d => d.type === 'phrase' && d.example).slice(0, 4);
   memoryCards = [];
@@ -1672,9 +1680,9 @@ function startMemoryGame() {
   container.innerHTML = '';
   memoryCards.forEach((card, index) => {
     let btn = document.createElement('button');
-    btn.innerText = '?';
+    btn.innerText = card.text; // Текст сразу виден
     btn.dataset.index = index;
-    btn.style.cssText = 'padding: 15px; background: #3498db; color: white; border: none; border-radius: 8px; font-size: 0.8rem; cursor: pointer; min-height: 80px; display: flex; align-items: center; justify-content: center; text-align: center;';
+    btn.style.cssText = 'padding: 10px; background: #3498db; color: white; border: none; border-radius: 8px; font-size: 0.75rem; cursor: pointer; min-height: 80px; display: flex; align-items: center; justify-content: center; text-align: center; word-break: break-word;';
     btn.onclick = () => flipMemoryCard(index, btn);
     container.appendChild(btn);
   });
@@ -1722,7 +1730,7 @@ function flipMemoryCard(index, btn) {
     }
   }
 }
-}
+
 
 function endMemoryGame() {
   document.getElementById('quizQuestion').innerText = 'Игра окончена!';
