@@ -1690,15 +1690,16 @@ function startMemoryGame() {
 
 function flipMemoryCard(index, btn) {
   let card = memoryCards[index];
-  if (memorySelected.length >= 2 || btn.disabled || btn.innerText !== '?') return;
+  if (memorySelected.length >= 2 || btn.disabled) return;
   
-  btn.innerText = card.text;
+  // Красим выбранную карточку в оранжевый
   btn.style.background = '#e67e22';
   memorySelected.push({ index, btn, card });
   
   if (memorySelected.length === 2) {
     let [first, second] = memorySelected;
     if (first.card.id === second.card.id && first.index !== second.index) {
+      // Совпадение
       memoryScore++;
       document.getElementById('quizScore').innerText = memoryScore;
       first.btn.disabled = true;
@@ -1712,15 +1713,15 @@ function flipMemoryCard(index, btn) {
         endMemoryGame();
       }
     } else {
+      // Не совпало
       setTimeout(() => {
-        first.btn.innerText = '?';
-        second.btn.innerText = '?';
         first.btn.style.background = '#3498db';
         second.btn.style.background = '#3498db';
         memorySelected = [];
-      }, 1000);
+      }, 500);
     }
   }
+}
 }
 
 function endMemoryGame() {
