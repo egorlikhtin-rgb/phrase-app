@@ -1,1 +1,466 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Слово дня: Микс v2</title>
+<link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --muted: #94a3b8;
+    --accent: #3b82f6; --accent-hover: #2563eb; --success: #10b981;
+    --gold: #f59e0b; --purple: #a855f7; --danger: #ef4444;
+    --border: rgba(255,255,255,0.1);
+    --font-main: 'Segoe UI', system-ui, sans-serif;
+    --font-serif: 'Georgia', serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-main); }
+  body {
+    background: var(--bg); color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 15px; flex-direction: column;
+    transition: background 0.6s ease;
+  }
+  
+  /* ВЕРХНЯЯ ПАНЕЛЬ С ИКОНКАМИ */
+  .top-icons {
+    position: fixed; top: 15px; left: 15px; right: 15px;
+    display: flex; justify-content: space-between; z-index: 100;
+  }
+  .icon-btn {
+    background: rgba(30, 41, 59, 0.9); border: 1px solid var(--border);
+    color: var(--text); width: 45px; height: 45px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; cursor: pointer; transition: 0.2s;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+  .icon-btn:hover { background: var(--accent); transform: scale(1.05); }
 
+  .app-container {
+    background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 20px; padding: 30px; width: 100%; max-width: 650px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    position: relative; overflow: hidden; min-height: 420px;
+    display: flex; flex-direction: column; margin-top: 60px;
+  }
+
+  .mode-switch { display: flex; gap: 8px; margin-bottom: 25px; justify-content: center; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 30px; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 16px; font-size: 0.85rem; background: transparent; border: none; color: var(--muted); border-radius: 25px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+  .mode-btn.active { background: var(--accent); color: white; }
+  .mode-btn:hover:not(.active) { color: var(--text); }
+
+  .type-header { font-size: 0.9rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .type-badge { padding: 5px 15px; border-radius: 20px; display: inline-block; }
+  
+  .phrase-title { font-size: 2rem; font-weight: 800; line-height: 1.35; margin-bottom: 25px; color: var(--text); text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+
+  .answer-block { display: none; padding-top: 20px; border-top: 1px dashed rgba(255,255,255,0.15); text-align: left; animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .meaning { font-size: 1.15rem; color: var(--text); line-height: 1.5; margin-bottom: 15px; }
+  .quote-author { font-size: 1rem; color: var(--gold); font-weight: 700; margin-bottom: 15px; font-style: italic; }
+  .example-box { background: rgba(16,185,129,0.1); border-left: 4px solid var(--success); padding: 15px; border-radius: 8px; font-style: italic; color: #d1fae5; font-size: 0.95rem; }
+  .example-box span { display: block; font-size: 0.75rem; color: var(--success); font-weight: 700; margin-bottom: 5px; text-transform: uppercase; font-style: normal;}
+
+  .controls { display: flex; gap: 10px; margin-top: 25px; justify-content: center; flex-wrap: wrap; }
+  button { padding: 12px 20px; border: none; border-radius: 10px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: 0.2s; flex: 1; min-width: 120px; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: rgba(255,255,255,0.1); color: var(--text); }
+  .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+  .btn-fav { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
+  .btn-fav:hover { background: rgba(239,68,68,0.3); }
+  .btn-fav.active { background: var(--danger); color: white; }
+  .btn-theme { background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.4); }
+  .btn-theme:hover { background: rgba(168,85,247,0.3); }
+  
+  .counter { font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 20px; }
+
+  /* МОДАЛЬНЫЕ ОКНА */
+  .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 1000; align-items: center; justify-content: center; flex-direction: column; padding: 20px; box-sizing: border-box; }
+  .modal-content { background: #1e293b; padding: 25px; border-radius: 15px; border: 1px solid #3b82f6; box-shadow: 0 10px 40px rgba(0,0,0,0.8); width: 100%; max-width: 500px; color: white; text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- ВЕРХНИЕ ИКОНКИ -->
+<div class="top-icons">
+  <div class="icon-btn" onclick="openSettings()">⚙️</div>
+  <div class="icon-btn" onclick="openProfile()">👤</div>
+</div>
+
+<div class="app-container">
+  <!-- Вкладки -->
+  <div class="mode-switch">
+    <button class="mode-btn active" onclick="setMode('all')">🎲 Всё вперемешку</button>
+    <button class="mode-btn" onclick="setMode('phrase')">📖 Фразеологизмы</button>
+    <button class="mode-btn" onclick="setMode('quote')">💬 Цитаты</button>
+    <button class="mode-btn" onclick="setMode('proverb')">🧩 Поговорки</button>
+    <button class="mode-btn" onclick="setMode('fav')">⭐ Избранное</button>
+  </div>
+
+  <!-- Поиск -->
+  <div style="margin-bottom: 15px; display: flex; gap: 8px;">
+    <input type="text" id="searchInput" placeholder="Поиск по словам..." oninput="searchItems()" style="flex: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: var(--text); padding: 10px 15px; border-radius: 10px; font-size: 0.9rem; outline: none;">
+  </div>
+
+  <div class="type-header" id="typeHeader">
+    <span class="type-badge" id="typeBadge">Загрузка...</span>
+  </div>
+
+  <div class="phrase-title" id="phraseTitle">...</div>
+
+  <div class="answer-block" id="answerBlock">
+    <div class="meaning" id="meaningText"></div>
+    <div class="quote-author" id="authorText" style="display:none;"></div>
+    <div class="example-box" id="exampleBox">
+      <span>Пример использования</span>
+      <span id="exampleText"></span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-fav" id="btnFav" onclick="toggleFavorite()">❤️ В избранное</button>
+    <button class="btn-secondary" onclick="showAnswer()" id="btnShow">Показать ответ</button>
+    <button class="btn-primary" onclick="nextItem()">Следующий ➔</button>
+  </div>
+
+  <div style="display:flex; justify-content:center; margin-top:10px; gap: 8px;">
+    <button class="btn-theme" onclick="changeTheme()">🎨 Сменить фон</button>
+    <button class="btn-theme" onclick="exportFavorites()">💾 Экспорт</button>
+    <button class="btn-theme" onclick="openGamesMenu()" style="background: #e67e22; color: white;">🎮 Игры</button>
+  </div>
+
+  <div class="counter" id="counterTag"></div>
+</div>
+
+<!-- МЕНЮ ИГР -->
+<div id="gamesModal" class="modal">
+  <div class="modal-content" style="max-width: 800px;">
+    <h3 style="color: #f39c12; margin-bottom: 20px; font-size: 1.5rem;">Выберите игру</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+      <div onclick="startQuiz()" style="background: #1e293b; padding: 30px 15px; border-radius: 10px; cursor: pointer; border: 1px solid #34495e; font-weight: bold; font-size: 1.1rem;">Викторина</div>
+      <div onclick="startMemoryGame()" style="background: #1e293b; padding: 30px 15px; border-radius: 10px; cursor: pointer; border: 1px solid #34495e; font-weight: bold; font-size: 1.1rem;">Найди пару</div>
+    </div>
+    <button onclick="closeGamesMenu()" style="background: #e74c3c; color: white; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%;">Закрыть</button>
+  </div>
+</div>
+
+<!-- НАСТРОЙКИ -->
+<div id="settingsModal" class="modal">
+  <div class="modal-content" style="max-width: 500px; text-align: left;">
+    <h3 style="color: #f39c12; margin-bottom: 20px; text-align: center;">Настройки</h3>
+    
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; color: #bdc3c7;">Размер шрифта:</label>
+      <select id="fontSizeSelect" onchange="changeFontSize()" style="width: 100%; padding: 10px; border-radius: 8px; background: #2c3e50; color: white; border: 1px solid #34495e;">
+        <option value="small">Мелкий</option>
+        <option value="medium" selected>Средний</option>
+        <option value="large">Крупный</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; color: #bdc3c7;">Стиль шрифта:</label>
+      <select id="fontStyleSelect" onchange="changeFontStyle()" style="width: 100%; padding: 10px; border-radius: 8px; background: #2c3e50; color: white; border: 1px solid #34495e;">
+        <option value="sans">Без засечек (современный)</option>
+        <option value="serif">С засечками (книжный)</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+      <input type="checkbox" id="toggleQuiz" checked style="width: 20px; height: 20px;">
+      <label for="toggleQuiz" style="color: #bdc3c7;">Показывать игру "Викторина"</label>
+    </div>
+
+    <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+      <input type="checkbox" id="toggleMemory" checked style="width: 20px; height: 20px;">
+      <label for="toggleMemory" style="color: #bdc3c7;">Показывать игру "Найди пару"</label>
+    </div>
+
+    <div style="display: flex; justify-content: center; margin-top: 25px;">
+      <button onclick="closeSettings()" style="background: #e74c3c; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- ПРОФИЛЬ -->
+<div id="profileModal" class="modal">
+  <div class="modal-content" style="max-width: 500px; text-align: left;">
+    <h3 style="color: #f39c12; margin-bottom: 20px; text-align: center;">Профиль</h3>
+    
+    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+      <div style="width: 70px; height: 70px; background: #34495e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem;" id="profileAvatar">🕵️</div>
+      <div>
+        <div style="font-size: 1.2rem; font-weight: bold;" id="profileNickname">Гость</div>
+        <div style="color: #bdc3c7; font-size: 0.9rem;">Любимая цитата: ...</div>
+      </div>
+    </div>
+
+    <div style="background: #2c3e50; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <span>Просмотрено карточек:</span> <b id="statViewed">0</b>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <span>В избранном:</span> <b id="statFav">0</b>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Ударный режим:</span> <b id="statStreak">0</b>
+      </div>
+    </div>
+
+    <div style="background: #2c3e50; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+      <div style="margin-bottom: 10px; font-weight: bold;">Что вы читаете больше:</div>
+      <div style="display: flex; height: 20px; border-radius: 5px; overflow: hidden;">
+        <div style="width: 33%; background: #3b82f6;" title="Фразеологизмы"></div>
+        <div style="width: 33%; background: #f59e0b;" title="Цитаты"></div>
+        <div style="width: 34%; background: #a855f7;" title="Поговорки"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 5px; color: #bdc3c7;">
+        <span>Фразеологизмы</span>
+        <span>Цитаты</span>
+        <span>Поговорки</span>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: center; margin-top: 25px;">
+      <button onclick="closeProfile()" style="background: #e74c3c; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// === БАЗА ДАННЫХ (СОКРАЩЕННАЯ ДЛЯ ПРИМЕРА) ===
+// ВАЖНО: Здесь я оставил только несколько элементов для проверки. 
+// Когда ты вставишь этот код, он заработает, но база будет маленькой.
+// Позже мы добавим остальные 1149 элементов.
+const DATA = [
+  { type: 'quote', text: 'Все счастливые семьи похожи друг на друга, каждая несчастливая семья несчастлива по-своему.', meaning: 'Мысль о том, что счастье строится на одинаковых принципах.', author: 'Лев Толстой', example: 'Роман «Анна Каренина»' },
+  { type: 'quote', text: 'Быть или не быть — вот в чём вопрос.', meaning: 'Выбор между жизнью и смертью.', author: 'Уильям Шекспир', example: 'Пьеса «Гамлет»' },
+  { type: 'phrase', text: 'Бить баклуши', meaning: 'Праздно проводить время, бездельничать.', example: 'Он целыми днями бил баклуши.' },
+  { type: 'phrase', text: 'Белая ворона', meaning: 'Человек, который сильно отличается от окружающих.', example: 'Среди спортсменов он выглядел белой вороной.' },
+  { type: 'proverb', text: 'Без труда не выловишь и рыбку из пруда.', meaning: 'Любое дело требует усилий.', example: 'Не ленись, без труда не выловишь и рыбку из пруда.' },
+  { type: 'proverb', text: 'Семь раз отмерь, один раз отрежь.', meaning: 'Думай перед действием.', example: 'Не спеши с решением, семь раз отмерь.' }
+];
+
+// === СОСТОЯНИЕ ===
+let currentItem = null;
+let currentMode = 'all';
+let filteredData = [];
+let favorites = JSON.parse(localStorage.getItem('pax_favorites') || '[]');
+let viewedCount = parseInt(localStorage.getItem('pax_viewed') || '0');
+let currentThemeIdx = parseInt(localStorage.getItem('pax_theme') || '0');
+
+// === ТЕМЫ ===
+const THEMES = [
+  { name: "Ночь", bg: "#0f172a", card: "rgba(30, 41, 59, 0.85)", text: "#f8fafc", muted: "#94a3b8" },
+  { name: "Космос", bg: "#0b0914", card: "rgba(25, 20, 45, 0.85)", text: "#e0d4ff", muted: "#a78bfa" },
+  { name: "Лес", bg: "#0f1a14", card: "rgba(20, 40, 30, 0.85)", text: "#dcfce7", muted: "#86efac" },
+  { name: "Закат", bg: "#1a0f0f", card: "rgba(50, 20, 20, 0.85)", text: "#fee2e2", muted: "#fca5a5" },
+  { name: "Океан", bg: "#0a1628", card: "rgba(15, 35, 60, 0.85)", text: "#e0f2fe", muted: "#7dd3fc" }
+];
+
+// === ФУНКЦИИ НАСТРОЕК ===
+function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
+function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+
+function changeFontSize() {
+  let size = document.getElementById('fontSizeSelect').value;
+  let fontSize = '1rem';
+  if (size === 'small') fontSize = '0.85rem';
+  if (size === 'large') fontSize = '1.3rem';
+  document.body.style.fontSize = fontSize;
+  localStorage.setItem('pax_fontSize', size);
+}
+
+function changeFontStyle() {
+  let style = document.getElementById('fontStyleSelect').value;
+  if (style === 'serif') {
+    document.body.style.fontFamily = "'Georgia', serif";
+  } else {
+    document.body.style.fontFamily = "'Segoe UI', system-ui, sans-serif";
+  }
+  localStorage.setItem('pax_fontStyle', style);
+}
+
+// === ПРОФИЛЬ ===
+function openProfile() {
+  document.getElementById('profileModal').style.display = 'flex';
+  document.getElementById('statViewed').innerText = viewedCount;
+  document.getElementById('statFav').innerText = favorites.length;
+  document.getElementById('statStreak').innerText = 0; // Заглушка
+}
+function closeProfile() { document.getElementById('profileModal').style.display = 'none'; }
+
+// === ОСНОВНАЯ ЛОГИКА ===
+function updateFilter() {
+  if (currentMode === 'all') filteredData = DATA;
+  else if (currentMode === 'phrase') filteredData = DATA.filter(d => d.type === 'phrase');
+  else if (currentMode === 'quote') filteredData = DATA.filter(d => d.type === 'quote');
+  else if (currentMode === 'proverb') filteredData = DATA.filter(d => d.type === 'proverb');
+  else if (currentMode === 'fav') filteredData = favorites;
+}
+
+function getRandomItem() {
+  if (filteredData.length === 0) return null;
+  return filteredData[Math.floor(Math.random() * filteredData.length)];
+}
+
+function nextItem() {
+  updateFilter();
+  const item = getRandomItem();
+  
+  const titleEl = document.getElementById('phraseTitle');
+  const badgeEl = document.getElementById('typeBadge');
+  const answerBlock = document.getElementById('answerBlock');
+  const btnFav = document.getElementById('btnFav');
+
+  if (!item) {
+    titleEl.innerText = 'Здесь пока пусто.';
+    answerBlock.style.display = 'none';
+    badgeEl.innerText = '—';
+    badgeEl.style.background = 'transparent';
+    badgeEl.style.color = 'var(--muted)';
+    document.getElementById('counterTag').innerText = '0 элементов';
+    btnFav.style.display = 'none';
+    return;
+  }
+  
+  currentItem = item;
+  btnFav.style.display = 'block';
+  viewedCount++;
+  localStorage.setItem('pax_viewed', viewedCount);
+  
+  if (item.type === 'quote') {
+    badgeEl.innerText = 'Цитата';
+    badgeEl.style.color = 'var(--gold)';
+    badgeEl.style.background = 'rgba(245,158,11,0.15)';
+  } else if (item.type === 'proverb') {
+    badgeEl.innerText = 'Пословица';
+    badgeEl.style.color = 'var(--purple)';
+    badgeEl.style.background = 'rgba(168,85,247,0.15)';
+  } else {
+    badgeEl.innerText = 'Фразеологизм';
+    badgeEl.style.color = 'var(--accent)';
+    badgeEl.style.background = 'rgba(59,130,246,0.15)';
+  }
+
+  titleEl.innerText = item.text;
+  document.getElementById('meaningText').innerText = item.meaning;
+  
+  const authorEl = document.getElementById('authorText');
+  if (item.type === 'quote' && item.author) {
+    authorEl.innerText = '— ' + item.author;
+    authorEl.style.display = 'block';
+  } else {
+    authorEl.style.display = 'none';
+  }
+
+  if (item.example) {
+    document.getElementById('exampleText').innerText = item.example;
+    document.getElementById('exampleBox').style.display = 'block';
+  } else {
+    document.getElementById('exampleBox').style.display = 'none';
+  }
+
+  answerBlock.style.display = 'none';
+  document.getElementById('btnShow').style.display = 'block';
+  
+  updateFavButton();
+  document.getElementById('counterTag').innerText = `Элементов: ${filteredData.length}`;
+}
+
+function showAnswer() {
+  document.getElementById('answerBlock').style.display = 'block';
+  document.getElementById('btnShow').style.display = 'none';
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  nextItem();
+}
+
+// === ИЗБРАННОЕ ===
+function isFavorite(item) { return favorites.some(f => f.text === item.text); }
+function toggleFavorite() {
+  if (!currentItem) return;
+  if (isFavorite(currentItem)) {
+    favorites = favorites.filter(f => f.text !== currentItem.text);
+  } else {
+    favorites.push(currentItem);
+  }
+  localStorage.setItem('pax_favorites', JSON.stringify(favorites));
+  updateFavButton();
+  if (currentMode === 'fav') nextItem();
+}
+function updateFavButton() {
+  const btn = document.getElementById('btnFav');
+  if (currentItem && isFavorite(currentItem)) {
+    btn.innerHTML = '💔 Удалить из избранного';
+    btn.classList.add('active');
+  } else {
+    btn.innerHTML = '❤️ В избранное';
+    btn.classList.remove('active');
+  }
+}
+
+// === ЭКСПОРТ ===
+function exportFavorites() {
+  if (favorites.length === 0) { alert('У вас пока нет избранных!'); return; }
+  let text = "МОИ ИЗБРАННЫЕ:\n\n";
+  favorites.forEach((item, index) => {
+    text += (index + 1) + ". " + item.text + "\n";
+    text += "Значение: " + item.meaning + "\n";
+    if (item.author) text += "Автор: " + item.author + "\n";
+    if (item.example) text += "Пример: " + item.example + "\n";
+    text += "-------------------\n";
+  });
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'Мое_избранное.txt'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// === СМЕНА ФОНА ===
+function changeTheme() {
+  currentThemeIdx = (currentThemeIdx + 1) % THEMES.length;
+  localStorage.setItem('pax_theme', currentThemeIdx);
+  applyTheme();
+}
+function applyTheme() {
+  const t = THEMES[currentThemeIdx];
+  document.body.style.background = t.bg;
+  document.querySelector('.app-container').style.background = t.card;
+  document.querySelector('.app-container').style.color = t.text;
+  document.querySelectorAll('.mode-btn').forEach(el => { if (!el.classList.contains('active')) el.style.color = t.muted; });
+  document.querySelectorAll('.phrase-title, .meaning').forEach(el => el.style.color = t.text);
+  document.querySelector('.counter').style.color = t.muted;
+}
+
+// === ИГРЫ (ЗАГЛУШКИ) ===
+function openGamesMenu() { document.getElementById('gamesModal').style.display = 'flex'; }
+function closeGamesMenu() { document.getElementById('gamesModal').style.display = 'none'; }
+function startQuiz() { alert('Игра "Викторина" будет добавлена в следующей части!'); }
+function startMemoryGame() { alert('Игра "Найди пару" будет добавлена в следующей части!'); }
+
+// === СТАРТ ===
+window.onload = () => {
+  // Применяем сохраненные настройки
+  let savedSize = localStorage.getItem('pax_fontSize');
+  if (savedSize) { document.getElementById('fontSizeSelect').value = savedSize; changeFontSize(); }
+  let savedStyle = localStorage.getItem('pax_fontStyle');
+  if (savedStyle) { document.getElementById('fontStyleSelect').value = savedStyle; changeFontStyle(); }
+  applyTheme();
+  nextItem();
+};
+</script>
+</body>
+</html>
